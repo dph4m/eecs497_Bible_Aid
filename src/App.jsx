@@ -1,23 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import './App.css';
+import { useEffect, useMemo, useState } from "react";
+import "./App.css";
 
 const NAV_LINKS = [
-  { href: '/', label: 'Home' },
-  { href: '/bible', label: 'Bible' },
-  { href: '/profile', label: 'Profile' }
+  { href: "/", label: "Home" },
+  { href: "/bible", label: "Bible" },
+  { href: "/profile", label: "Profile" },
 ];
 
 function normalizePath(pathname) {
-  if (!pathname) return '/';
-  const trimmed = pathname.replace(/\/+$/, '');
-  return trimmed || '/';
+  if (!pathname) return "/";
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/";
 }
 
 function TopNav({ pathname, onNavigate }) {
   return (
     <header className="top-nav-wrap">
       <nav className="top-nav container">
-        <a href="/" className="brand" onClick={(event) => onNavigate('/', event)}>
+        <a
+          href="/"
+          className="brand"
+          onClick={(event) => onNavigate("/", event)}
+        >
           Scripture
         </a>
         <div className="nav-links">
@@ -25,7 +29,7 @@ function TopNav({ pathname, onNavigate }) {
             <a
               key={link.href}
               href={link.href}
-              className={pathname === link.href ? 'is-active' : ''}
+              className={pathname === link.href ? "is-active" : ""}
               onClick={(event) => onNavigate(link.href, event)}
             >
               {link.label}
@@ -35,7 +39,7 @@ function TopNav({ pathname, onNavigate }) {
         <a
           href="/bible"
           className="btn btn-solid nav-cta"
-          onClick={(event) => onNavigate('/bible', event)}
+          onClick={(event) => onNavigate("/bible", event)}
         >
           Start Reading
         </a>
@@ -45,6 +49,24 @@ function TopNav({ pathname, onNavigate }) {
 }
 
 function HomePage({ onNavigate }) {
+  const [randVerse, setRandVerse] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVerse() {
+      try {
+        const verse = await getRand();
+        setRandVerse(verse.random_verse);
+      } catch (err) {
+        console.error("Failed to fetch verse:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVerse();
+  }, []); // Empty array = runs once on mount
+
   return (
     <main>
       <section className="hero container">
@@ -52,29 +74,40 @@ function HomePage({ onNavigate }) {
           <p className="kicker">Scripture Wireframe</p>
           <h1>Read scripture like YOU mean it</h1>
           <p>
-            Bible Aid helps you stay focused with clean reading, quick notes, and practical study
-            prompts in one place.
+            Bible Aid helps you stay focused with clean reading, quick notes,
+            and practical study prompts in one place.
           </p>
           <div className="hero-actions">
-            <a href="/bible" className="btn btn-solid" onClick={(event) => onNavigate('/bible', event)}>
+            <a
+              href="/bible"
+              className="btn btn-solid"
+              onClick={(event) => onNavigate("/bible", event)}
+            >
               Open Bible
             </a>
             <a
               href="/profile"
               className="btn btn-outline"
-              onClick={(event) => onNavigate('/profile', event)}
+              onClick={(event) => onNavigate("/profile", event)}
             >
               View Profile
             </a>
           </div>
         </div>
         <div className="hero-card">
-          <h2>Daily Reading</h2>
-          <p>John 15:5</p>
+          <h2>Random Verse</h2>
+          {loading ? (
+            <p>Loading verse...</p>
+          ) : randVerse ? (
+            <>
+          <p>{randVerse.book} {randVerse.chapter}:{randVerse.verse}</p>
           <blockquote>
-            I am the vine, you are the branches. Whoever abides in me and I in him, he it is that
-            bears much fruit.
+            {randVerse.text}
           </blockquote>
+          </>
+          ) : (
+            <p> Couldn't load verse.</p>
+          )}
           <div className="hero-card-row">
             <span>Plan streak</span>
             <strong>14 days</strong>
@@ -88,14 +121,16 @@ function HomePage({ onNavigate }) {
             <p className="kicker">Designed for reading</p>
             <h2>Made to remove friction from your Bible habit</h2>
             <p>
-              Everything is organized so you can move from reading to reflection to action without
-              bouncing between tools.
+              Everything is organized so you can move from reading to reflection
+              to action without bouncing between tools.
             </p>
           </div>
           <div className="mini-grid">
             <article>
               <h3>Verse Focus</h3>
-              <p>Keep your eyes on one passage while context tools stay nearby.</p>
+              <p>
+                Keep your eyes on one passage while context tools stay nearby.
+              </p>
             </article>
             <article>
               <h3>Simple Notes</h3>
@@ -117,15 +152,22 @@ function HomePage({ onNavigate }) {
         <div className="card-grid">
           <article className="feature-card">
             <h3>Bible Reader</h3>
-            <p>Navigate chapters quickly with a distraction-light reading layout.</p>
+            <p>
+              Navigate chapters quickly with a distraction-light reading layout.
+            </p>
           </article>
           <article className="feature-card">
             <h3>Study Companion</h3>
-            <p>Get key themes, context, and practical applications for each passage.</p>
+            <p>
+              Get key themes, context, and practical applications for each
+              passage.
+            </p>
           </article>
           <article className="feature-card">
             <h3>Reflection Notes</h3>
-            <p>Track what stood out and revisit your notes whenever you return.</p>
+            <p>
+              Track what stood out and revisit your notes whenever you return.
+            </p>
           </article>
         </div>
       </section>
@@ -139,15 +181,24 @@ function HomePage({ onNavigate }) {
         <div className="faq-list">
           <details open>
             <summary>Can I create reading plans?</summary>
-            <p>Yes. Create a plan by selecting a book and setting a daily chapter target.</p>
+            <p>
+              Yes. Create a plan by selecting a book and setting a daily chapter
+              target.
+            </p>
           </details>
           <details>
             <summary>Does it sync notes across devices?</summary>
-            <p>Yes. Notes stay synced so your progress is available on desktop and mobile.</p>
+            <p>
+              Yes. Notes stay synced so your progress is available on desktop
+              and mobile.
+            </p>
           </details>
           <details>
             <summary>How do I change translation?</summary>
-            <p>Open reader settings and choose your preferred translation from the list.</p>
+            <p>
+              Open reader settings and choose your preferred translation from
+              the list.
+            </p>
           </details>
         </div>
       </section>
@@ -167,34 +218,95 @@ function HomePage({ onNavigate }) {
   );
 }
 
+function getRand() {
+  return fetch(`https://bible-api.com/data/web/random/NT`)
+    .then((response) => {
+      if (response.ok) {
+        return response.json(); // Parse the response data as JSON
+      } else {
+        throw new Error("API request failed");
+      }
+    })
+    .then((data) => {
+      console.log(data);
+      return data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
+function getChap(book, chap) {
+  return fetch(`https://bible-api.com/${book}+${chap}?translation=asv`)
+    .then((response) => {
+      if (response.ok) {
+        return response.json(); // Parse the response data as JSON
+      } else {
+        throw new Error("API request failed");
+      }
+    })
+    .then((data) => {
+      console.log(data);
+      return data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
 function BiblePage() {
+  const [chapter, setChapter] = useState(1);
+  const [book, setBook] = useState("Genesis");
+  const [dat, setDat] = useState(null);
+
+  function handleSubmit(e) {
+    e.preventDefault(); // prevents page reload
+
+    if (!book || !chapter) return;
+
+    getChap(book, chapter).then(setDat);
+  }
+
   return (
     <main>
+      <form onSubmit={handleSubmit}>
+        <label>Book:</label>
+        <input
+          type="text"
+          value={book}
+          onChange={(e) => setBook(e.target.value)}
+        />
+
+        <label>Chapter:</label>
+        <input
+          type="number"
+          min="1"
+          value={chapter}
+          onChange={(e) => setChapter(Number(e.target.value))}
+        />
+
+        <button type="submit">Submit</button>
+      </form>
       <section className="bible-hero">
         <div className="container bible-hero-inner">
           <p className="kicker">Bible</p>
-          <h1>John 1</h1>
-          <p className="hero-support">Read with context, notes, and focused verse highlights.</p>
+          <h1>{dat?.reference}</h1>
+          <p className="hero-support">
+            Read with context, notes, and focused verse highlights.
+          </p>
         </div>
       </section>
       <section className="container bible-content">
         <article className="reading-card">
-          <div className="reading-head">
-            <strong>Chapter 1</strong>
-            <span>ESV</span>
-          </div>
-          <p>
-            <sup>1</sup> In the beginning was the Word, and the Word was with God, and the Word
-            was God.
-          </p>
-          <p>
-            <sup>2</sup> He was in the beginning with God. <sup>3</sup> All things were made
-            through him, and without him was not any thing made that was made.
-          </p>
-          <p>
-            <sup>4</sup> In him was life, and the life was the light of men. <sup>5</sup> The
-            light shines in the darkness, and the darkness has not overcome it.
-          </p>
+          {dat && dat.verses ? (
+            dat.verses.map((v) => (
+              <p key={v.verse}>
+                <sup>{v.verse}</sup> {v.text}
+              </p>
+            ))
+          ) : (
+            <p>Please enter a valid Bible chapter.</p>
+          )}
         </article>
         <aside className="study-panel">
           <div className="panel-card">
@@ -244,7 +356,10 @@ function ProfilePage() {
             </div>
           </div>
         </article>
-        <form className="settings-card" onSubmit={(event) => event.preventDefault()}>
+        <form
+          className="settings-card"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <h2>Profile details</h2>
           <label htmlFor="name">Name</label>
           <input id="name" defaultValue="John Smith." />
@@ -270,11 +385,17 @@ function ProfilePage() {
         <div className="faq-list">
           <details open>
             <summary>Can I export my notes?</summary>
-            <p>Yes. Use the export action in the Notes tab to download a text file.</p>
+            <p>
+              Yes. Use the export action in the Notes tab to download a text
+              file.
+            </p>
           </details>
           <details>
             <summary>How do I reset my password?</summary>
-            <p>Open Account Settings and choose password reset to receive an email link.</p>
+            <p>
+              Open Account Settings and choose password reset to receive an
+              email link.
+            </p>
           </details>
         </div>
       </section>
@@ -292,13 +413,13 @@ function SiteFooter({ onNavigate }) {
         </div>
         <div>
           <h4>Product</h4>
-          <a href="/" onClick={(event) => onNavigate('/', event)}>
+          <a href="/" onClick={(event) => onNavigate("/", event)}>
             Home
           </a>
-          <a href="/bible" onClick={(event) => onNavigate('/bible', event)}>
+          <a href="/bible" onClick={(event) => onNavigate("/bible", event)}>
             Bible
           </a>
-          <a href="/profile" onClick={(event) => onNavigate('/profile', event)}>
+          <a href="/profile" onClick={(event) => onNavigate("/profile", event)}>
             Profile
           </a>
         </div>
@@ -320,34 +441,40 @@ function SiteFooter({ onNavigate }) {
 }
 
 function App() {
-  const [pathname, setPathname] = useState(() => normalizePath(window.location.pathname));
+  const [pathname, setPathname] = useState(() =>
+    normalizePath(window.location.pathname),
+  );
 
   useEffect(() => {
-    const onPopState = () => setPathname(normalizePath(window.location.pathname));
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    const onPopState = () =>
+      setPathname(normalizePath(window.location.pathname));
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   const handleNavigate = (to, event) => {
     if (event) event.preventDefault();
     if (to === pathname) return;
-    window.history.pushState({}, '', to);
+    window.history.pushState({}, "", to);
     setPathname(to);
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   };
 
   const activePage = useMemo(() => {
-    if (pathname === '/bible') return 'bible';
-    if (pathname === '/profile') return 'profile';
-    return 'home';
+    if (pathname === "/bible") return "bible";
+    if (pathname === "/profile") return "profile";
+    return "home";
   }, [pathname]);
 
   return (
     <div className="app-shell">
-      <TopNav pathname={activePage === 'home' ? '/' : `/${activePage}`} onNavigate={handleNavigate} />
-      {activePage === 'home' && <HomePage onNavigate={handleNavigate} />}
-      {activePage === 'bible' && <BiblePage />}
-      {activePage === 'profile' && <ProfilePage />}
+      <TopNav
+        pathname={activePage === "home" ? "/" : `/${activePage}`}
+        onNavigate={handleNavigate}
+      />
+      {activePage === "home" && <HomePage onNavigate={handleNavigate} />}
+      {activePage === "bible" && <BiblePage />}
+      {activePage === "profile" && <ProfilePage />}
       <SiteFooter onNavigate={handleNavigate} />
     </div>
   );
