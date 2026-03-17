@@ -7,6 +7,75 @@ const NAV_LINKS = [
   { href: "/profile", label: "Profile" },
 ];
 
+const BIBLE_BOOKS = [
+  { name: "Genesis", chapters: 50 },
+  { name: "Exodus", chapters: 40 },
+  { name: "Leviticus", chapters: 27 },
+  { name: "Numbers", chapters: 36 },
+  { name: "Deuteronomy", chapters: 34 },
+  { name: "Joshua", chapters: 24 },
+  { name: "Judges", chapters: 21 },
+  { name: "Ruth", chapters: 4 },
+  { name: "1 Samuel", chapters: 31 },
+  { name: "2 Samuel", chapters: 24 },
+  { name: "1 Kings", chapters: 22 },
+  { name: "2 Kings", chapters: 25 },
+  { name: "1 Chronicles", chapters: 29 },
+  { name: "2 Chronicles", chapters: 36 },
+  { name: "Ezra", chapters: 10 },
+  { name: "Nehemiah", chapters: 13 },
+  { name: "Esther", chapters: 10 },
+  { name: "Job", chapters: 42 },
+  { name: "Psalms", chapters: 150 },
+  { name: "Proverbs", chapters: 31 },
+  { name: "Ecclesiastes", chapters: 12 },
+  { name: "Song of Solomon", chapters: 8 },
+  { name: "Isaiah", chapters: 66 },
+  { name: "Jeremiah", chapters: 52 },
+  { name: "Lamentations", chapters: 5 },
+  { name: "Ezekiel", chapters: 48 },
+  { name: "Daniel", chapters: 12 },
+  { name: "Hosea", chapters: 14 },
+  { name: "Joel", chapters: 3 },
+  { name: "Amos", chapters: 9 },
+  { name: "Obadiah", chapters: 1 },
+  { name: "Jonah", chapters: 4 },
+  { name: "Micah", chapters: 7 },
+  { name: "Nahum", chapters: 3 },
+  { name: "Habakkuk", chapters: 3 },
+  { name: "Zephaniah", chapters: 3 },
+  { name: "Haggai", chapters: 2 },
+  { name: "Zechariah", chapters: 14 },
+  { name: "Malachi", chapters: 4 },
+  { name: "Matthew", chapters: 28 },
+  { name: "Mark", chapters: 16 },
+  { name: "Luke", chapters: 24 },
+  { name: "John", chapters: 21 },
+  { name: "Acts", chapters: 28 },
+  { name: "Romans", chapters: 16 },
+  { name: "1 Corinthians", chapters: 16 },
+  { name: "2 Corinthians", chapters: 13 },
+  { name: "Galatians", chapters: 6 },
+  { name: "Ephesians", chapters: 6 },
+  { name: "Philippians", chapters: 4 },
+  { name: "Colossians", chapters: 4 },
+  { name: "1 Thessalonians", chapters: 5 },
+  { name: "2 Thessalonians", chapters: 3 },
+  { name: "1 Timothy", chapters: 6 },
+  { name: "2 Timothy", chapters: 4 },
+  { name: "Titus", chapters: 3 },
+  { name: "Philemon", chapters: 1 },
+  { name: "Hebrews", chapters: 13 },
+  { name: "James", chapters: 5 },
+  { name: "1 Peter", chapters: 5 },
+  { name: "2 Peter", chapters: 3 },
+  { name: "1 John", chapters: 5 },
+  { name: "2 John", chapters: 1 },
+  { name: "3 John", chapters: 1 },
+  { name: "Jude", chapters: 1 },
+  { name: "Revelation", chapters: 22 },
+];
+
 function normalizePath(pathname) {
   if (!pathname) return "/";
   const trimmed = pathname.replace(/\/+$/, "");
@@ -100,11 +169,11 @@ function HomePage({ onNavigate }) {
             <p>Loading verse...</p>
           ) : randVerse ? (
             <>
-          <p>{randVerse.book} {randVerse.chapter}:{randVerse.verse}</p>
-          <blockquote>
-            {randVerse.text}
-          </blockquote>
-          </>
+              <p>
+                {randVerse.book} {randVerse.chapter}:{randVerse.verse}
+              </p>
+              <blockquote>{randVerse.text}</blockquote>
+            </>
           ) : (
             <p> Couldn't load verse.</p>
           )}
@@ -258,6 +327,12 @@ function BiblePage() {
   const [chapter, setChapter] = useState(1);
   const [book, setBook] = useState("Genesis");
   const [dat, setDat] = useState(null);
+  const selectedBook = BIBLE_BOOKS.find((entry) => entry.name === book);
+  const maxChapter = selectedBook?.chapters ?? 1;
+
+  useEffect(() => {
+    setChapter((currentChapter) => Math.min(currentChapter, maxChapter));
+  }, [maxChapter]);
 
   function handleSubmit(e) {
     e.preventDefault(); // prevents page reload
@@ -269,28 +344,10 @@ function BiblePage() {
 
   return (
     <main>
-      <form onSubmit={handleSubmit}>
-        <label>Book:</label>
-        <input
-          type="text"
-          value={book}
-          onChange={(e) => setBook(e.target.value)}
-        />
-
-        <label>Chapter:</label>
-        <input
-          type="number"
-          min="1"
-          value={chapter}
-          onChange={(e) => setChapter(Number(e.target.value))}
-        />
-
-        <button type="submit">Submit</button>
-      </form>
       <section className="bible-hero">
         <div className="container bible-hero-inner">
           <p className="kicker">Bible</p>
-          <h1>{dat?.reference}</h1>
+          <h1>{dat?.reference ?? "Choose a chapter to begin reading"}</h1>
           <p className="hero-support">
             Read with context, notes, and focused verse highlights.
           </p>
@@ -298,6 +355,48 @@ function BiblePage() {
       </section>
       <section className="container bible-content">
         <article className="reading-card">
+          <form className="chapter-picker" onSubmit={handleSubmit}>
+            <div className="chapter-picker-head">
+              <div>
+                <p className="kicker">Select a Passage</p>
+              </div>
+              <button type="submit" className="btn btn-solid">
+                Load Chapter
+              </button>
+            </div>
+            <div className="chapter-picker-grid">
+              <label>
+                <span>Book</span>
+                <select value={book} onChange={(e) => setBook(e.target.value)}>
+                  {BIBLE_BOOKS.map((entry) => (
+                    <option key={entry.name} value={entry.name}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Chapter</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={maxChapter}
+                  value={chapter}
+                  onChange={(e) => {
+                    const nextChapter = Number(e.target.value);
+                    if (Number.isNaN(nextChapter)) {
+                      setChapter(1);
+                      return;
+                    }
+                    setChapter(Math.min(Math.max(nextChapter, 1), maxChapter));
+                  }}
+                />
+              </label>
+            </div>
+            <p className="chapter-picker-note">
+              {book} has {maxChapter} chapter{maxChapter === 1 ? "" : "s"}.
+            </p>
+          </form>
           {dat && dat.verses ? (
             dat.verses.map((v) => (
               <p key={v.verse}>
