@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const NAV_LINKS = [
@@ -313,18 +313,176 @@ function BiblePage() {
   const [chapter, setChapter] = useState(1);
   const [book, setBook] = useState("Genesis");
   const [dat, setDat] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsError, setTtsError] = useState("");
+  const utteranceRef = useRef(null);
+  const playbackIdRef = useRef(0);
+  const manualStopRef = useRef(false);
+  const [voiceList, setVoiceList] = useState([]);
   const selectedBook = BIBLE_BOOKS.find((entry) => entry.name === book);
   const maxChapter = selectedBook?.chapters ?? 1;
+  const ttsSupported =
+    typeof window !== "undefined" &&
+    "speechSynthesis" in window &&
+    "SpeechSynthesisUtterance" in window;
+  const passageText =
+    dat?.verses?.map((verse) => verse.text.trim()).join(" ").trim() ?? "";
+
+  function pickWiseVoice(voices) {
+    if (!voices || voices.length === 0) return null;
+
+    const preferredNames = [
+      "google uk english male",
+      "microsoft david",
+      "daniel",
+      "fred",
+      "alex",
+    ];
+    const avoidNames = ["child", "junior", "novelty", "whisper"];
+
+    const rankedVoices = voices
+      .filter((voice) => voice.lang?.toLowerCase().startsWith("en"))
+      .map((voice) => {
+        const name = voice.name.toLowerCase();
+        let score = 0;
+
+        if (preferredNames.some((term) => name.includes(term))) score += 4;
+        if (name.includes("male") || name.includes("man")) score += 2;
+        if (voice.localService) score += 1;
+        if (name.includes("enhanced") || name.includes("neural")) score += 1;
+        if (avoidNames.some((term) => name.includes(term))) score -= 5;
+
+        return { voice, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    return rankedVoices[0]?.voice ?? null;
+  }
 
   useEffect(() => {
     setChapter((currentChapter) => Math.min(currentChapter, maxChapter));
   }, [maxChapter]);
+
+  useEffect(() => {
+    if (!ttsSupported) return;
+
+    const synth = window.speechSynthesis;
+    const loadVoices = () => {
+      const nextVoices = synth.getVoices();
+      if (nextVoices?.length) {
+        setVoiceList(nextVoices);
+      }
+    };
+
+    loadVoices();
+    synth.addEventListener("voiceschanged", loadVoices);
+
+    return () => synth.removeEventListener("voiceschanged", loadVoices);
+  }, [ttsSupported]);
+
+  function stopSpeech({ manual = true } = {}) {
+    if (!ttsSupported) return;
+    manualStopRef.current = manual;
+    playbackIdRef.current += 1;
+    window.speechSynthesis.cancel();
+    utteranceRef.current = null;
+    setIsSpeaking(false);
+    if (manual) {
+      setTtsError("");
+    }
+  }
+
+  function speakPassage() {
+    if (!ttsSupported) {
+      setTtsError("Text-to-speech is not supported in this browser.");
+      return;
+    }
+
+    if (!passageText) {
+      return;
+    }
+
+    const verseChunks =
+      dat?.verses?.map((verse) => verse.text.trim()).filter(Boolean) ?? [];
+    if (verseChunks.length === 0) {
+      return;
+    }
+
+    setTtsError("");
+    manualStopRef.current = false;
+    playbackIdRef.current += 1;
+    const playbackId = playbackIdRef.current;
+    window.speechSynthesis.cancel();
+    const voices = voiceList.length
+      ? voiceList
+      : window.speechSynthesis.getVoices();
+    const wiseVoice = pickWiseVoice(voices);
+    setIsSpeaking(true);
+
+    let index = 0;
+    const speakNext = () => {
+      if (playbackId !== playbackIdRef.current) return;
+
+      if (index >= verseChunks.length) {
+        setIsSpeaking(false);
+        utteranceRef.current = null;
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(verseChunks[index]);
+      if (wiseVoice) {
+        utterance.voice = wiseVoice;
+        utterance.lang = wiseVoice.lang || "en-US";
+      } else {
+        utterance.lang = "en-US";
+      }
+      utterance.rate = 0.9;
+      utterance.pitch = 0.67;
+      utterance.volume = 1;
+      utterance.onend = () => {
+        if (playbackId !== playbackIdRef.current) return;
+        index += 1;
+        speakNext();
+      };
+      utterance.onerror = (event) => {
+        if (playbackId !== playbackIdRef.current) return;
+
+        const synthError = event?.error;
+        const wasCanceled =
+          synthError === "canceled" || synthError === "interrupted";
+
+        if (!wasCanceled || !manualStopRef.current) {
+          setTtsError("Could not read this passage aloud.");
+        }
+        setIsSpeaking(false);
+        utteranceRef.current = null;
+      };
+
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    };
+
+    speakNext();
+  }
+
+  useEffect(() => {
+    if (!ttsSupported) {
+      setTtsError("Text-to-speech is not supported in this browser.");
+    }
+  }, [ttsSupported]);
+
+  useEffect(() => {
+    stopSpeech({ manual: false });
+  }, [dat?.reference]);
+
+  useEffect(() => () => stopSpeech({ manual: false }), []);
 
   function handleSubmit(e) {
     e.preventDefault(); // prevents page reload
 
     if (!book || !chapter) return;
 
+    stopSpeech({ manual: false });
     getChap(book, chapter).then(setDat);
   }
 
@@ -346,9 +504,21 @@ function BiblePage() {
               <div>
                 <p className="kicker">Select a Passage</p>
               </div>
-              <button type="submit" className="btn btn-solid">
-                Load Chapter
-              </button>
+              <div className="chapter-picker-actions">
+                <button type="submit" className="btn btn-solid">
+                  Load Chapter
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={
+                    isSpeaking ? () => stopSpeech({ manual: true }) : speakPassage
+                  }
+                  disabled={!passageText || !ttsSupported}
+                >
+                  {isSpeaking ? "Stop Reading" : "Read Aloud"}
+                </button>
+              </div>
             </div>
             <div className="chapter-picker-grid">
               <label>
@@ -381,6 +551,9 @@ function BiblePage() {
             </div>
             <p className="chapter-picker-note">
               {book} has {maxChapter} chapter{maxChapter === 1 ? "" : "s"}.
+            </p>
+            <p className="tts-status" aria-live="polite">
+              {ttsError ? ttsError : isSpeaking ? "Speaking..." : ""}
             </p>
           </form>
           {dat && dat.verses ? (
