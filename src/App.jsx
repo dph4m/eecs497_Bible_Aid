@@ -390,7 +390,7 @@ function BiblePage() {
               </p>
             ))
           ) : (
-            <p>Please enter a valid Bible chapter.</p>
+            <p></p>
           )}
         </article>
         <aside className="study-panel">
