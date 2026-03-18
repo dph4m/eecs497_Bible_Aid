@@ -140,10 +140,9 @@ function HomePage({ onNavigate }) {
     <main>
       <section className="hero container">
         <div className="hero-copy">
-          <p className="kicker">Scripture Wireframe</p>
           <h1>Read scripture like YOU mean it</h1>
           <p>
-            Bible Aid helps you stay focused with clean reading, quick notes,
+            Bible Aid helps you stay focused with clean reading,
             and practical study prompts in one place.
           </p>
           <div className="hero-actions">
@@ -216,7 +215,7 @@ function HomePage({ onNavigate }) {
       <section className="container section-stack">
         <div className="section-title">
           <p className="kicker">What you get</p>
-          <h2>Three powerful tools for deeper reading</h2>
+          <h2>Powerful tools for deeper reading</h2>
         </div>
         <div className="card-grid">
           <article className="feature-card">
@@ -230,12 +229,6 @@ function HomePage({ onNavigate }) {
             <p>
               Get key themes, context, and practical applications for each
               passage.
-            </p>
-          </article>
-          <article className="feature-card">
-            <h3>Reflection Notes</h3>
-            <p>
-              Track what stood out and revisit your notes whenever you return.
             </p>
           </article>
         </div>
@@ -256,13 +249,6 @@ function HomePage({ onNavigate }) {
             </p>
           </details>
           <details>
-            <summary>Does it sync notes across devices?</summary>
-            <p>
-              Yes. Notes stay synced so your progress is available on desktop
-              and mobile.
-            </p>
-          </details>
-          <details>
             <summary>How do I change translation?</summary>
             <p>
               Open reader settings and choose your preferred translation from
@@ -276,8 +262,8 @@ function HomePage({ onNavigate }) {
         <div className="contact-card">
           <h3>Contact us</h3>
           <p>Chicago, IL</p>
-          <p>+1 (773) 555-0178</p>
-          <p>hello@scriptureaid.app</p>
+          <p>+1 (777) 777-7777</p>
+          <p>help@scriptureaid.app</p>
         </div>
         <div className="map-card" aria-label="Map preview">
           <span>Office Location</span>
@@ -415,10 +401,6 @@ function BiblePage() {
           <div className="panel-card">
             <h3>Reflection Prompt</h3>
             <p>How does this passage reshape your view of who Jesus is?</p>
-          </div>
-          <div className="panel-card">
-            <h3>Quick Notes</h3>
-            <p>- The Word is active, personal, and divine.</p>
           </div>
         </aside>
       </section>
