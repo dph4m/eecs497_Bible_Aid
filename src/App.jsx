@@ -417,6 +417,7 @@ function BiblePage() {
       ? voiceList
       : window.speechSynthesis.getVoices();
     const wiseVoice = pickWiseVoice(voices);
+    let useWiseVoice = Boolean(wiseVoice);
     setIsSpeaking(true);
 
     let index = 0;
@@ -430,7 +431,7 @@ function BiblePage() {
       }
 
       const utterance = new SpeechSynthesisUtterance(verseChunks[index]);
-      if (wiseVoice) {
+      if (useWiseVoice && wiseVoice) {
         utterance.voice = wiseVoice;
         utterance.lang = wiseVoice.lang || "en-US";
       } else {
@@ -450,6 +451,14 @@ function BiblePage() {
         const synthError = event?.error;
         const wasCanceled =
           synthError === "canceled" || synthError === "interrupted";
+
+        // Some selected voices fail on certain browsers/devices; retry with default.
+        if (!wasCanceled && useWiseVoice) {
+          useWiseVoice = false;
+          window.speechSynthesis.cancel();
+          speakNext();
+          return;
+        }
 
         if (!wasCanceled || !manualStopRef.current) {
           setTtsError("Could not read this passage aloud.");
