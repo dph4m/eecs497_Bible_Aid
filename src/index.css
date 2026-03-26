@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Prata&display=swap');
+@import "tailwindcss";
 
 :root {
   --surface: #faf7f0;
